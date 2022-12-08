@@ -1,0 +1,145 @@
+﻿#if _MSC_VER >= 1600
+    #pragma execution_character_set("utf-8")
+#endif
+
+#include "hdlhdefault.h"
+
+/// 策略名称
+#define STRATEGY_NAME "default"
+/// 周期1（毫秒）
+const long long PERIOD_1 = HOUR * 12;
+/// 周期2（毫秒）
+const long long PERIOD_2 = DAY;
+/// 账户最大亏损 (%)
+const double RISK = -5.0;
+/// 账户最大回撤 (%)
+const double RISK_BACKDOWN = 5.0;
+/// 回测资金
+const double TESTBALANCE = 1000000.0;
+/// 最大持仓
+const int HOLDMAX = 9999;
+
+#ifdef DLL_A
+CREATE_CLASS(HdlhDefault);
+#endif
+
+/// 计算
+/// \brief HdlhDefault::calfactor
+/// \param PERIOD 周期（毫秒），tick数据为0
+///
+void HdlhDefault::calfactor(const long long PERIOD)
+{
+    //data->begin()->nowopen = true;
+}
+
+/// 开仓
+/// \brief HdlhDefault::on_open
+/// \param tick
+/// \param period1 周期数据
+/// \param period2 周期数据
+/// \param allmarketvar 市场信息
+/// \param baseinfo 基础信息
+/// \param hold 持仓
+/// \param carrydata 交易携带数据
+///
+void HdlhDefault::on_open(const Bar *tick,
+                          const Bar *period1,
+                          const Bar *period2,
+                          AllMarketVar &allmarketvar,
+                          const BaseInfo &baseinfo,
+                          const Hold *hold,
+                          CarryData &carrydata)
+{
+    if(period1->nowopen)data->trade(TradeType::openup, tick->close, 10000.0, 1.0, false);
+}
+
+/// 平仓
+/// \brief HdlhDefault::on_close
+/// \param tick
+/// \param period1 周期数据
+/// \param period2 周期数据
+/// \param allmarketvar 市场信息
+/// \param baseinfo 基础信息
+/// \param hold 持仓
+/// \param carrydata 交易携带数据
+///
+void HdlhDefault::on_close(const Bar *tick,
+                           const Bar *period1,
+                           const Bar *period2,
+                           AllMarketVar &allmarketvar,
+                           const BaseInfo &baseinfo,
+                           Hold *hold,
+                           CarryData &carrydata)
+{
+    if(period1->nowclose)data->trade(TradeType::closeup, tick->close, DBL_MAX, 1.0, hold->mirror);
+}
+
+/// 交易成功回调
+/// \brief HdlhDefault::on_tradesuccess
+/// \param hold 持仓
+/// \param carrydata 交易携带数据
+/// \param tdPrice 成交均价
+/// \param tdQuantity 成交数量
+///
+void HdlhDefault::on_tradesuccess(Hold *hold, CarryData &carrydata, double tdPrice, double tdQuantity)
+{
+    // 开仓锁定，只允许开仓一次
+    if(hold->tradeType == TradeType::openup || hold->tradeType == TradeType::opendown)
+    {
+        hold->lockBuy = true;
+    }
+}
+
+/// 雷达
+/// \brief HdlhDefault::radar
+/// \param tick
+/// \param period1 周期数据
+/// \param period2 周期数据
+/// \param allmarketvar 市场信息
+/// \param baseinfo 基础信息
+/// \param hold 持仓
+/// \param carrydata 交易携带数据
+/// \return
+///
+bool HdlhDefault::radar(const Bar *tick,
+                        const Bar *period1,
+                        const Bar *period2,
+                        AllMarketVar &allmarketvar,
+                        const BaseInfo &baseinfo,
+                        const Hold *hold,
+                        CarryData &carrydata)
+{
+    return false;
+}
+
+/* 以下函数是返回策略参数 */
+
+long long HdlhDefault::getperiod1()
+{
+    return PERIOD_1;
+}
+
+long long HdlhDefault::getperiod2()
+{
+    return PERIOD_2;
+}
+
+double HdlhDefault::getAccountRisk()
+{
+    return RISK;
+}
+
+double HdlhDefault::getAccountRiskBackDown()
+{
+    return RISK_BACKDOWN;
+}
+
+double HdlhDefault::getTestBalance()
+{
+    return TESTBALANCE;
+}
+
+int HdlhDefault::getHoldMax()
+{
+    return HOLDMAX;
+}
